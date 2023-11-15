@@ -3,6 +3,7 @@ package a;
 import java.io.*;
 import java.net.Socket;
 import java.util.Scanner;
+import a.Response;
 
 public class client {
     public static void main(String[] args) {
@@ -35,13 +36,30 @@ public class client {
                     break;
                 }
 
-                String result = in.readLine();
-                System.out.println("계산 결과: " + result);
+                // 서버로부터 응답 받기
+                String responseString = in.readLine();
+                Response response = parseResponse(responseString);
+
+                // 응답 처리
+                if (response.getCode() == 200) {
+                    System.out.println("계산 결과: " + response.getMessage());
+                } else {
+                    System.out.println("에러 코드: " + response.getCode());
+                    System.out.println("에러 메시지: " + response.getMessage());
+                }
             }
 
             socket.close();
         } catch (IOException e) {
             System.out.println("오류: " + e.getMessage());
         }
+    }
+
+    // 서버로부터 받은 응답 문자열을 Response 객체로 파싱하는 메서드
+    private static Response parseResponse(String responseString) {
+        String[] parts = responseString.split(" ", 2);
+        int code = Integer.parseInt(parts[0]);
+        String message = parts.length > 1 ? parts[1] : "";
+        return new Response(code, message);
     }
 }
