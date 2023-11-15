@@ -4,6 +4,7 @@ import java.io.*;
 import java.net.*;
 import java.util.*;
 import java.util.concurrent.*;
+import a.Response;
 
 public class server {
     private static class ClientHandler implements Runnable {
@@ -27,8 +28,11 @@ public class server {
                         break; // "bye"를 받거나 연결이 종료되면 루프 탈출
                     }
 
-                    String result = calc(inputMessage);
-                    out.write(result + "\n");
+                    // 계산 및 응답 생성
+                    Response response = calcAndCreateResponse(inputMessage);
+
+                    // 응답 전송
+                    out.write(response.getCode() + " " + response.getMessage() + "\n");
                     out.flush();
                 }
             } catch (IOException e) {
@@ -37,30 +41,38 @@ public class server {
         }
     }
 
-    public static String calc(String exp) {
+    // 계산 및 응답 생성 메서드
+    public static Response calcAndCreateResponse(String exp) {
         StringTokenizer st = new StringTokenizer(exp, " ");
         if (st.countTokens() != 3)
-            return "error: too many arguments";
+            return new Response(400, "Invalid expression");
 
-        String opcode = st.nextToken().toLowerCase(); // 연산자를 소문자로 변경
+        String opcode = st.nextToken().toLowerCase();
         int op1 = Integer.parseInt(st.nextToken());
         int op2 = Integer.parseInt(st.nextToken());
 
+        int result;
         switch (opcode) {
             case "add":
-                return Integer.toString(op1 + op2);
+                result = op1 + op2;
+                break;
             case "min":
-                return Integer.toString(op1 - op2);
+                result = op1 - op2;
+                break;
             case "mul":
-                return Integer.toString(op1 * op2);
+                result = op1 * op2;
+                break;
             case "div":
                 if (op2 == 0) {
-                    return "error: divide by zero";
+                    return new Response(400, "Divide by zero error");
                 }
-                return Integer.toString(op1 / op2);
+                result = op1 / op2;
+                break;
             default:
-                return "error";
+                return new Response(400, "Invalid operator");
         }
+
+        return new Response(200, Integer.toString(result));
     }
 
     public static void main(String[] args) {
